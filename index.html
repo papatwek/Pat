@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dry Run</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23D79A3B'/%3E%3Ctext x='16' y='22' font-family='Inter,sans-serif' font-size='14' font-weight='700' fill='%232B1B04' text-anchor='middle'%3EDR%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="toolbar">
+    <div class="brand">
+      <span class="brand-mark">DR</span>
+      <div class="brand-text">
+        <strong>Dry Run</strong>
+        <span>Wyze live-chat trainer</span>
+      </div>
+    </div>
+    <div class="toolbar-controls">
+      <select id="categorySelect" class="tb-select" aria-label="Scenario type">
+        <option value="random">Scenario: Random</option>
+        <option value="connectivity">Device offline / won't connect</option>
+        <option value="account">App or login trouble</option>
+        <option value="footage">Missing footage / cloud storage</option>
+        <option value="hardware">Hardware malfunction</option>
+        <option value="shipping">Shipping / delivery delay</option>
+        <option value="rma">Defective item / RMA request</option>
+        <option value="billing">Billing / Cam Plus dispute</option>
+        <option value="privacy">Privacy or security concern</option>
+        <option value="howto">Feature confusion / how-to</option>
+        <option value="motion">Motion detection / event clips not triggering</option>
+        <option value="sd">SD card / local video won't play</option>
+        <option value="battery">Wireless cam battery draining / not charging</option>
+        <option value="view">Live view black / buffering / won't load</option>
+        <option value="audio">Two-way audio / speaker not working</option>
+        <option value="notify">Push notifications not arriving</option>
+        <option value="night">Night vision / image quality poor</option>
+        <option value="home">Routines / Alexa / Google integration</option>
+      </select>
+      <select id="emotionSelect" class="tb-select" aria-label="Customer mood">
+        <option value="random">Mood: Random</option>
+        <option value="calm">Calm</option>
+        <option value="annoyed">Mildly annoyed</option>
+        <option value="frustrated">Frustrated</option>
+        <option value="upset">Very upset</option>
+        <option value="anxious">Anxious / worried</option>
+        <option value="confused">Confused</option>
+      </select>
+      <label class="toggle" title="Run two customers at once, like a real live-chat queue"><input type="checkbox" id="twoChatsToggle"><span>2 chats</span></label>
+      <label class="toggle" title="On-screen reply timer that glows yellow/red if you take too long"><input type="checkbox" id="timerToggle"><span>Timer</span></label>
+      <button id="newScenarioBtn" class="btn btn-primary">Start new customer</button>
+      <button id="feedbackBtn" class="btn btn-ghost" disabled>Get coaching notes</button>
+      <button id="caseBtn" class="btn btn-ghost">Case file</button>
+      <label class="toggle"><input type="checkbox" id="trainerModeToggle"><span>Trainer view</span></label>
+      <button id="historyBtn" class="btn btn-ghost">History</button>
+      <button id="infoBtn" class="icon-btn" aria-label="How this works" title="How this works">?</button>
+    </div>
+  </header>
+
+  <div class="disclaimer">
+    <strong>Training simulator only</strong> — not affiliated with or endorsed by Wyze Labs, Inc. Every detail the simulated customer gives you (name, email, MAC address, order number) is invented for practice. Never paste real customer information into this tool.
+  </div>
+
+  <main class="workspace">
+
+    <section class="pane chat-pane" aria-label="Simulated customer chat">
+      <div class="chat-header">
+        <div class="chat-id">
+          <div class="chat-tabs" id="chatTabs" role="tablist"></div>
+          <span class="ticket-id" id="ticketId">No active case</span>
+          <span class="status-pill" id="statusPill" hidden></span>
+        </div>
+        <div class="chat-meta" id="chatMeta"></div>
+      </div>
+
+      <div class="reply-timer" id="replyTimer" hidden>
+        <span class="timer-label">Reply time</span>
+        <span class="timer-clock" id="replyTimerClock">—</span>
+      </div>
+
+      <div class="speed-bar" id="speedBar" hidden>
+        <span id="speedLive">Start typing your reply to measure your speed</span>
+        <span id="speedAvg" class="speed-avg"></span>
+      </div>
+
+      <div class="error-banner" id="errorBanner" hidden>
+        <span id="errorText"></span>
+        <button type="button" id="retryBtn">Retry</button>
+      </div>
+
+      <div class="chat-log" id="chatLog" aria-live="polite">
+        <div class="empty-state" id="emptyState">
+          <p>Ready when you are.</p>
+          <p>Pick a scenario type and mood above — or leave both on Random — then start a new customer to begin the chat.</p>
+        </div>
+      </div>
+
+      <div class="typing-indicator" id="typingIndicator" hidden aria-label="Customer is typing">
+        <span></span><span></span><span></span>
+      </div>
+
+      <form class="chat-input" id="chatForm">
+        <textarea id="agentInput" placeholder="Type your reply as the agent… (Enter to send, Shift+Enter for a new line)" disabled rows="2"></textarea>
+        <button type="submit" class="btn btn-primary" id="sendBtn" disabled>Send</button>
+      </form>
+    </section>
+
+    <aside class="pane case-pane" id="casePane" aria-label="Case documentation" hidden>
+      <div class="case-head">
+        <h2>Case file <span id="caseTabLabel" class="case-tab-label"></span></h2>
+        <div class="case-actions">
+          <button type="button" class="link-btn" id="copyBtn">Copy transcript &amp; notes</button>
+          <button type="button" class="modal-close" id="closeCase" aria-label="Close">×</button>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <label>Name<input id="fCustomerName" type="text" placeholder="Ask the customer" autocomplete="off"></label>
+        <label>Email<input id="fEmail" type="text" placeholder="Ask the customer" autocomplete="off"></label>
+        <label>Product<input id="fProduct" type="text" placeholder="e.g. Wyze Cam v3" autocomplete="off"></label>
+      </div>
+
+      <label class="notes-label">Recap / TS
+        <textarea id="fRecap" placeholder="What the customer reported and the troubleshooting steps you ran through…"></textarea>
+      </label>
+      <label class="notes-label">Resources
+        <textarea id="fResources" placeholder="KB articles, tools, or docs you referenced…"></textarea>
+      </label>
+      <label class="notes-label">Next Steps
+        <textarea id="fNextSteps" placeholder="What was agreed, follow-ups, or anything still pending…"></textarea>
+      </label>
+      <label class="notes-label">Escalation POC (if needed)
+        <textarea id="fEscalation" placeholder="Who/where the case escalates to and why, or leave blank if resolved…"></textarea>
+      </label>
+      <div class="save-indicator" id="saveIndicator" aria-live="polite">&nbsp;</div>
+
+      <section class="post-section" aria-label="Post-drill summary">
+        <h3>Post-drill summary</h3>
+        <div class="post-fields">
+          <label>Trainee Name<input id="fTraineeName" type="text" placeholder="e.g. Jordan Reyes" autocomplete="off"></label>
+          <label>LOB<input id="fLob" type="text" placeholder="e.g. Cameras / Home Security" autocomplete="off"></label>
+        </div>
+        <button id="endBtn" class="btn btn-primary btn-block" disabled>End conversation</button>
+        <div class="avg-wpm" id="avgWpmBox" hidden aria-live="polite">Average typing speed: <b id="avgWpmVal">—</b></div>
+        <div class="feedback-box" id="coachingBox" hidden>
+          <h3>Coaching points</h3>
+          <div id="coachingContent"></div>
+        </div>
+      </section>
+
+      <details class="answer-key" id="answerKey" hidden>
+        <summary>Trainer answer key</summary>
+        <dl id="answerKeyContent"></dl>
+      </details>
+
+      <div class="feedback-box" id="feedbackBox" hidden>
+        <h3>Coaching notes</h3>
+        <div id="feedbackContent"></div>
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<!-- History modal -->
+<div class="modal" id="historyModal" hidden>
+  <div class="modal-content">
+    <button class="modal-close" id="closeHistory" aria-label="Close">×</button>
+    <h3>Past sessions</h3>
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<!-- Info modal -->
+<div class="modal" id="infoModal" hidden>
+  <div class="modal-content">
+    <button class="modal-close" id="closeInfo" aria-label="Close">×</button>
+    <h3>How this works</h3>
+    <ol class="info-steps">
+      <li><strong>Start a new customer.</strong> Optionally set a scenario type and mood, or leave both random.</li>
+      <li><strong>Handle the chat</strong> the way you would on the floor — apply your SOP, ask verification questions, troubleshoot.</li>
+      <li><strong>Log the case</strong> in the fields on the right as you learn each detail. Nothing is pre-filled on purpose — that's the practice.</li>
+      <li><strong>Get coaching notes</strong> any time after the first reply for a read on what you did well and what to tighten up.</li>
+      <li><strong>Watch your typing speed</strong> — every reply you type is timed (words per minute) so you can see whether your responses are fast enough for a live-chat queue.</li>
+      <li><strong>Trainer view</strong> reveals the real persona details and ideal resolution, for checking a trainee's notes against the truth.</li>
+    </ol>
+    <p class="muted">Your case notes and past sessions are saved to this browser only — nobody else using this page can see them.</p>
+  </div>
+</div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
